@@ -1,0 +1,74 @@
+---
+title: "MergingData"
+output: html_document
+---
+
+Load packages & options
+```{r}
+chooseCRANmirror(graphics=FALSE, ind=1)
+knitr::opts_chunk$set(echo = TRUE)
+if(!require(markdown)){install.packages('markdown', quietly=TRUE);require(markdown)}
+if(!require(knitr)){install.packages('knitr', quietly=TRUE);require(knitr)}
+if(!require(dplyr)){install.packages('dplyr', quietly=TRUE);require(dplyr)}
+if(!require(rlist)){install.packages('rlist', quietly=TRUE);require(rlist)}
+if(!require(tidygeocoder)){install.packages('tidygeocoder', quietly=TRUE);require(tidygeocoder)}
+if(!require(tidyverse)){install.packages('tidyverse', quietly=TRUE);require(tidyverse)}
+if(!require(geosphere)){install.packages('geosphere', quietly=TRUE);require(geosphere)}
+```
+
+
+# Data 
+```{r}
+#Set working Directory
+setwd("/Users/vero/Desktop/datathon")
+#Load in data
+Data.full <- read.csv("movehubqualityoflife.csv", header=TRUE)
+Data.full <- Data.full[, -(2:7)]
+Data.full$City <- tolower(Data.full$City)
+Data <- read.csv("movehubQOL2.csv", header=TRUE)
+Data <- Data[Data$Country=='United States',]
+Data <- Data[is.na(Data$X)==0, -1]
+Data.us <- merge(Data.full, Data, by.x='City', by.y='City')
+Data.us <- Data.us[-c(2,33), -c(10:11)]
+```
+
+
+# Load in parks and recs data 
+```{r}
+#Load in parks and rec data
+Data.1 <- read.csv("parks_rec.csv", header=TRUE)
+Data.1$City <- tolower(substr(Data.1$City, 1,nchar(Data.1$City)-4))
+Data.us <- merge(Data.us, Data.1, by.x='City', by.y='City')
+```
+
+#Load in fun data
+```{r}
+Data.2 <- read.csv("mostfuncities.csv", header=TRUE)
+Data.2 <- Data.2[, -c(2,6)]
+DataFinal <- merge(Data.us, Data.2, by.x='City', by.y='city')
+write.csv(DataFinal, "/Users/vero/Desktop/datathon/DataFinal.csv")
+```
+
+#Load in yearly hours of sunshine data
+```{r}
+Data.3 <- read.csv("cities_by_sunshine_duration.csv", header=TRUE)
+Data.3 <- Data.3[Data.3$country=='United States',-c(1,2,4:15)]
+Data.3$city <- tolower(Data.3$city)
+DataFinal <- merge(DataFinal, Data.3, by.x='City', by.y='city')
+```
+
+#Load in temperature data
+```{r}
+Data.4 <- read.csv("cityweather.csv", header=TRUE)
+DataFinal <- merge(DataFinal, Data.4, by.x='City', by.y='city')
+```
+
+#Export final dataset
+```{r}
+colnames(DataFinal)[10:15] <- c('ParksandRecSpending', 'EnternainmentandRecRank', 
+                                'NightlifeRank', 'NightlifeCostRank', 
+                                'SunshineHoursPerYear', 'CamelotClimateIndex')
+write.csv(DataFinal, "/Users/vero/Desktop/datathon/DataFinal.csv")
+```
+
+
